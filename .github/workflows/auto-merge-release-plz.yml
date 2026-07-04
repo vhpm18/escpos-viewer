@@ -1,0 +1,26 @@
+name: Auto-merge Release PRs
+
+on:
+  pull_request:
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - ready_for_review
+
+permissions:
+  pull-requests: write
+  contents: write
+
+jobs:
+  enable-automerge:
+    name: Enable auto-merge for release-plz PRs
+    runs-on: ubuntu-latest
+    if: startsWith(github.head_ref, 'release-plz-') && github.base_ref == 'main'
+    steps:
+      - name: Enable auto-merge
+        uses: peter-evans/enable-pull-request-automerge@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          pull-request-number: ${{ github.event.pull_request.number }}
+          merge-method: squash

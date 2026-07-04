@@ -1,0 +1,36 @@
+Guía rápida: Configurar la impresora virtual "ESCPos Viewer (TCP 9100)" en Windows
+
+Esta guía sirve si durante la instalación no se pudo crear la impresora automáticamente.
+
+Requisitos
+- Ejecutar como Administrador para crear puertos/impresoras.
+
+Paso a paso (Windows 10/11)
+1) Abrir: Panel de control -> Dispositivos e impresoras
+2) Clic: Agregar una impresora
+3) Elegir: "La impresora que quiero no está en la lista"
+4) Seleccionar: "Agregar una impresora local o de red con configuración manual"
+5) Elegir un puerto:
+   - "Crear un nuevo puerto"
+   - Tipo: "Standard TCP/IP Port"
+6) Host/IP: 127.0.0.1
+   - Nombre de puerto: ESCPosViewer9100
+7) Configuración del puerto:
+   - Custom -> Settings...
+   - Protocol: RAW
+   - Port Number: 9100
+   - SNMP: Disabled
+8) Driver:
+   - Generic -> "Generic / Text Only"
+9) Nombre de impresora:
+   - ESCPos Viewer (TCP 9100)
+10) Finalizar
+
+Cómo probar
+1) Abre el programa Visor ESC-POS
+2) Activa: "Escuchar impresora (TCP 9100)"
+3) Imprime cualquier texto a la impresora "ESCPos Viewer (TCP 9100)"
+
+Notas
+- Si el puerto 9100 está ocupado, el visor mostrará un error al activar el listener.
+- En ese caso puedes cambiar el puerto en Windows y en el visor (si lo necesitas, ajustamos el código).

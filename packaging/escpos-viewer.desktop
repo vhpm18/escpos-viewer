@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Visor ESC-POS
+Comment=ESC/POS receipt viewer — capture and preview thermal printer tickets
+Exec=escpos-viewer
+Icon=escpos-viewer
+Categories=Utility;Office;
+Terminal=false
+StartupNotify=true

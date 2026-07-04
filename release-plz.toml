@@ -1,0 +1,15 @@
+[workspace]
+# No publicamos a crates.io: solo bump de versión + tag + changelog.
+publish = false
+
+# Habilitar creación de GitHub Release con tag automático
+git_release_enable = true
+
+# Nuestro pipeline ya está basado en tags v*.
+git_tag_name = "v{{ version }}"
+
+# No releases por cada commit: solo cuando se mergea el Release PR.
+release_always = false
+
+# Este proyecto es principalmente binario; evitamos semver-checks.
+semver_check = false
