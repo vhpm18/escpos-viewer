@@ -1,0 +1,108 @@
+name: Windows Release
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*"
+  workflow_run:
+    workflows: ["Release-plz"]
+    types:
+      - completed
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.ref }}
+
+      - name: Compute version from tag
+        id: vars
+        shell: pwsh
+        run: |
+          $tag = $null
+
+          if ("${{ github.event_name }}" -eq "workflow_run") {
+            $tag = (git tag --points-at HEAD --list "v*" | Select-Object -First 1)
+          } else {
+            $tag = "${{ github.ref_name }}"
+            if (-not $tag.StartsWith('v')) {
+              # workflow_dispatch en branch, etc.
+              $tag = $null
+            }
+          }
+
+          if (-not $tag) {
+            "has_tag=false" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+            Write-Host "No v* tag available; skipping windows release steps."
+            exit 0
+          }
+
+          $v = $tag
+          if ($v.StartsWith('v')) { $v = $v.Substring(1) }
+          if ([string]::IsNullOrWhiteSpace($v)) { throw "Version empty" }
+
+          "has_tag=true" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          "tag=$tag" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          "version=$v" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          Write-Host "Detected tag: $tag, version: $v"
+
+      - name: Install Rust
+        if: steps.vars.outputs.has_tag == 'true'
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Rust cache
+        if: steps.vars.outputs.has_tag == 'true'
+        uses: Swatinem/rust-cache@v2
+
+      - name: Build (release)
+        if: steps.vars.outputs.has_tag == 'true'
+        shell: pwsh
+        run: |
+          cargo build --release
+
+      - name: Install Inno Setup (Chocolatey)
+        if: steps.vars.outputs.has_tag == 'true'
+        shell: pwsh
+        run: |
+          choco install innosetup -y --no-progress
+
+      - name: Build installer (setup.iss)
+        if: steps.vars.outputs.has_tag == 'true'
+        shell: pwsh
+        run: |
+          $iscc = "C:\\Program Files (x86)\\Inno Setup 6\\ISCC.exe"
+          if (-not (Test-Path $iscc)) {
+            throw "ISCC not found at $iscc"
+          }
+          & $iscc "setup.iss" "/DMyAppVersion=${{ steps.vars.outputs.version }}"
+
+      - name: Verify outputs
+        if: steps.vars.outputs.has_tag == 'true'
+        shell: pwsh
+        run: |
+          $portable = "target\\release\\escpos_viewer.exe"
+          $installer = "installer\\InstaladorVisorESCPOS.exe"
+          if (-not (Test-Path $portable)) { throw "Missing: $portable" }
+          if (-not (Test-Path $installer)) { throw "Missing: $installer" }
+          Get-Item $portable, $installer | Format-List FullName, Length, LastWriteTime
+
+      - name: GitHub Release
+        if: steps.vars.outputs.has_tag == 'true'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: "${{ steps.vars.outputs.tag }}"
+          name: "${{ steps.vars.outputs.tag }}"
+          generate_release_notes: true
+          files: |
+            target/release/escpos_viewer.exe
+            installer/InstaladorVisorESCPOS.exe
