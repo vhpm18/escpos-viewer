@@ -220,6 +220,12 @@ Requiere **Administrador**. Crea el puerto `ESCPosViewer9100` y la impresora con
 
 ---
 
+## Créditos
+
+Este proyecto es un fork con mejoras multiplataforma de [escpos-viewer-pro](https://github.com/moises717/escpos-viewer-pro) de **Moisés Barillas** ([@moises717](https://github.com/moises717)). El código original está bajo licencia MIT.
+
+---
+
 ## Licencia
 
 MIT
